@@ -154,11 +154,12 @@ class ActivateUserResource(Resource):
             user.activation_code = 'verified'
             db.session.commit()
             user_verification_successfull(email)
-            return jsonify({'message': 'User activated successfully'})
+            return {'message': 'User activated successfully'}  # Return dictionary directly
         else:
-            return jsonify({'message': 'Invalid activation code or email'}), 400  
+            return {'message': 'Invalid activation code or email'}, 400  # Return dictionary for error case
 
 user_activation_api.add_resource(ActivateUserResource, '/activate')
+
 
 
 soil_parameters_fields = {

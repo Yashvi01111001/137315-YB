@@ -29,9 +29,9 @@ def user_verification_email(email, activation_code):
     msg.body = f' Your tried logging in but you account has not been verfied. \n Kindly activate your account to login. Your activation code is: {activation_code}. Use this code to activate your account.'
     mail.send(msg)
     
-def user_verification_successfull(email,First_name):
+def user_verification_successfull(email):
     msg = Message('Verification successfull', sender='noreply@smartfarming.com', recipients=[email])
-    msg.body = f'Hello {First_name},Welcome to Smart Farming! Your account has been successfully verified. '
+    msg.body = f'Hello ,Welcome to Smart Farming! Your account has been successfully verified. '
     mail.send(msg)
 
 model = joblib.load('ml_model/smart_farmingmodel.joblib')
