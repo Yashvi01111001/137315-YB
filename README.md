@@ -156,7 +156,7 @@ intellifarma/
 ```
 
 ## Run the flask application
-Run the following command tp start the flask server:
+Run the following command to start the flask server:
 ```
    flask run
     ```
