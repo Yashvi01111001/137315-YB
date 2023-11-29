@@ -52,7 +52,7 @@ class UserLogin(Resource):
             activation_code = send_activation_code_email(email)
             if activation_code:
                 user_verification_email(email, activation_code)
-                message = f'Your account has not been verified. Verification code sent to your email: {email}.'
+                message = f'Your account has not been verified. Verification code sent to your email address: {email}.'
                 return {'message': message}, 400
             else:
                 return {'message': 'Failed to send verification code'}, 500
