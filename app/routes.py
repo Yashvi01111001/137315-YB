@@ -9,7 +9,7 @@ from uuid import uuid4
 import bcrypt
 from app.services import  generate_activation_code, predict_crop_for_user, send_activation_code_email, send_activation_email, user_verification_email, user_verification_successfull
 
-
+#Blueprint and API setup
 main = Blueprint('main', __name__)
 api = Api(main)
 soil_parameters_bp = Blueprint('soil_parameters', __name__)
@@ -27,12 +27,13 @@ logout_user_api = Api(logout_user_bp)
 all_reviews_bp = Blueprint('review',__name__)
 all_reviews_api = Api(all_reviews_bp)
 
+#User Authentication
 class UserLogin(Resource):
     def post(self):
         data = request.json
         email = data.get('email')
         password = data.get('password')
-
+        # Checking if email and password are provided
         if not email or not password:
             return {'message': 'Email and password are required'}, 400
         
@@ -40,13 +41,13 @@ class UserLogin(Resource):
         
         if not status:
             return{'message':'Account is not verified'},400
-
+        # Validating user credentials
         user = User.query.filter_by(email=email).first()
 
         if not user or not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
             return {'message': 'Invalid credentials'}, 401
         
-        
+        # Handling account verification
         if user.status != 'Active':
             # User not verified, send verification email and return a message
             activation_code = send_activation_code_email(email)
@@ -83,6 +84,7 @@ class UserLogin(Resource):
 # Add the login route to the main Blueprint
 main.add_url_rule('/login', view_func=UserLogin.as_view('user_login'))
 
+# Defining fields for serialization
 user_fields = {
     'id': fields.Integer,
     'First_name': fields.String,
@@ -95,14 +97,14 @@ user_fields = {
     'status': fields.String,
 }
 
-
+#User registration
 class RegisterUser(Resource):  
     def post(self):
         data = request.json
         
         existing_user = User.query.filter_by(email=data.get('email')).first()
         
-
+        # default role for new user ('farmer)
         role_id = 2
         role = Role.query.get(role_id)
         status = data.get('status') or 'inactive'
@@ -110,6 +112,7 @@ class RegisterUser(Resource):
         if not role:
             return {'message': 'Role does not exist'}, 400
         
+        #encrypting password before storing it in the database
         hashed_password = bcrypt.hashpw(data.get('password').encode('utf-8'), bcrypt.gensalt())
         activation_code = generate_activation_code() 
 
@@ -129,14 +132,17 @@ class RegisterUser(Resource):
             return {'message': 'Email already exists'}, 400
         
         try:
+            # Saving the new user details to the database
             db.session.add(new_user)
             db.session.commit()
+            #Sending verification code via email
             send_activation_email(new_user.email, activation_code)
             return jsonify({'message': 'Registered successfully. Verification code has been sent to your email address'}), 201
         
         except Exception as e:
             db.session.rollback()
             return {'message': f'Failed to register user: {str(e)}'}, 500
+# Adding the registration route to the main Blueprint
 main.add_url_rule('/register', view_func=RegisterUser.as_view('register_user'))
 
 from flask import jsonify
@@ -146,9 +152,9 @@ class ActivateUserResource(Resource):
         data = request.json
         email = data.get('email')
         activation_code = data.get('activation_code')
-
+#Comparing verification code entered by the user and the one in the database
         user = User.query.filter_by(email=email, activation_code=activation_code).first()
-
+        
         if user:
             user.status = 'Active'
             user.activation_code = 'verified'
@@ -161,7 +167,7 @@ class ActivateUserResource(Resource):
 user_activation_api.add_resource(ActivateUserResource, '/activate')
 
 
-
+# Defining fields for serialization of soil parameters
 soil_parameters_fields = {
     'id' : fields.Integer,
     'user_id' : fields.Integer,
@@ -174,12 +180,12 @@ soil_parameters_fields = {
     'rainfall' : fields.Float,
 }
 
-
+# Storing soil parameters
 class SoilParametersResources(Resource) :
     @marshal_with(soil_parameters_fields)
     def post(self) :
         data = request.json
-
+        # Creating a new entry for soil parameters
         new_soil_parameter = SoilParameters(
             user_id=data.get('user_id'),
             nitrogen_level=data.get('nitrogen_level'),
@@ -192,6 +198,7 @@ class SoilParametersResources(Resource) :
         )
 
         try :
+            # Saving the new soil parameters to the database
             db.session.add(new_soil_parameter)
             db.session.commit()
             return new_soil_parameter, 201
@@ -203,12 +210,13 @@ soil_parameters_api.add_resource(SoilParametersResources, '/soil-parameters')
 
 
 #----------------------------------------------------------------------------------------------------------------------
-
+# Retrieving latest soil parameters by user ID and making crop predictions
 class SoilParametersByUser(Resource):
     def get(self, user_id):
         latest_param = get_latest_soil_parameters_by_user(user_id)
         prediction =  predict_crop_for_user(user_id)
         if prediction is not None and len(prediction) > 0:
+            # Creating a crop prediction entry
             crop_prediction = CropPrediction(
                 parameter_id=latest_param.id,
                 predicted_crop_name=str(prediction[0]),
@@ -226,7 +234,7 @@ api.add_resource(SoilParametersByUser, '/soil-parameters/<int:user_id>')
 #----------------------------------------------------------------------------------------------------------------------
 
 
-
+# Defining fields for serialization
 user_review_fields ={
     'user_id': fields.Integer,
     'prediction_id':fields.Integer,
@@ -234,11 +242,12 @@ user_review_fields ={
     'review_text':fields.String,
     
 }
+# Handling user reviews and ratings
 class UserReviewResource(Resource):
     @marshal_with(user_review_fields)
     def post(self):
         data = request.json
-        
+        # Creating a new user review entry
         new_user_review = Review(
             user_id=data.get('user_id'),
             prediction_id=data.get('prediction_id'),
@@ -247,6 +256,7 @@ class UserReviewResource(Resource):
           )
         
         try :
+            # Saving the new user review to the database
             db.session.add(new_user_review)
             db.session.commit()
             return new_user_review, 201
@@ -256,11 +266,12 @@ class UserReviewResource(Resource):
         
 user_review_api.add_resource(UserReviewResource, '/user-reviews')
 
+# Retrieving all user reviews
 class AllReviews(Resource):
     def get(self):
         reviews = Review.query.all()
         review_list = []
-
+        # Formatting review data
         for review in reviews:
             review_info = {
                 'user_name': review.user.First_name, 
@@ -274,13 +285,12 @@ class AllReviews(Resource):
     
 all_reviews_api.add_resource(AllReviews, '/all-reviews')
 
-
-
+# Logging out a user
 
 class LogoutResource(Resource):
     def post(self, user_id):
         sessions = Session.query.filter_by(user_id=user_id).all()
-
+#Updating the session table with the logout timestamp
         for session in sessions:
             session.logout_timestamp = datetime.now()
 

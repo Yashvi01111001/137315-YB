@@ -1,4 +1,4 @@
-# SMART FARMING: A Regression Model to Optimize Crop Selection for Kenya’s Staple Food Farmers.
+# SMART FARMING: A Machine Learning Mobile Application to Optimize Crop Selection for Farmers.
 
 ## Table of Contents
 

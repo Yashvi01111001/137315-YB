@@ -1,13 +1,13 @@
 from . import db
 from datetime import datetime
 
-
+#Model for roles table
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     role_name = db.Column(db.String(50), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
-
+#Model for Users table
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     First_name = db.Column(db.String(50), nullable=False)
@@ -24,7 +24,7 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
     
-
+#Model for session table
 class Session(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -33,7 +33,7 @@ class Session(db.Model):
     login_timestamp = db.Column(db.DateTime, nullable=False)
     logout_timestamp = db.Column(db.DateTime, nullable=True)
 
-
+#Model for soil parameters table
 class SoilParameters(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -48,6 +48,7 @@ class SoilParameters(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
     
+#Model for Crop details tables 
 
 class CropDetails(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -57,7 +58,7 @@ class CropDetails(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
     
-
+#Model for crop prediction table
 class CropPrediction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     parameter_id = db.Column(db.Integer, db.ForeignKey('soil_parameters.id'))
@@ -67,7 +68,7 @@ class CropPrediction(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
     
-
+#Model for Review table
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
